@@ -1,13 +1,14 @@
 from model import Pix2Pix
 from data_utils import get_train_test_files, get_data_gen
 import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
+from keras.backend import set_session
 
-config = tf.ConfigProto()
+# config = tf.ConfigProto()
+config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
 config.log_device_placement = False  # to log device placement (on which device the operation ran)
-                                    # (nothing gets printed in Jupyter, only if you run it standalone)
-sess = tf.Session(config=config)
+# (nothing gets printed in Jupyter, only if you run it standalone)
+sess = tf.compat.v1.Session(config=config)
 set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 # params
@@ -20,7 +21,7 @@ im_width = im_height = 256
 
 train_files, test_files = get_train_test_files()
 train_gen = get_data_gen(files=train_files, timesteps=timesteps, batch_size=batch_size, im_size=(im_width, im_height))
-gan = Pix2Pix(im_height=im_height, im_width=im_width, lookback=timesteps-1)
+gan = Pix2Pix(im_height=im_height, im_width=im_width, lookback=timesteps - 1)
 print("Generator Summary")
 gan.generator.summary()
 print()

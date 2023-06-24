@@ -2,7 +2,7 @@ from __future__ import print_function, division
 
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate, ConvLSTM2D
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
-from keras.layers.advanced_activations import LeakyReLU
+from keras.layers import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import os
+
 
 class Pix2Pix():
     def __init__(self, im_width=256, im_height=256, channels=3, lookback=4):
@@ -21,23 +22,22 @@ class Pix2Pix():
         self.lookback = lookback
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.img_seq_shape = (self.lookback + 1,) + self.img_shape
-        
-        
+
         # Calculate output shape of D (PatchGAN)
-        patch = int(self.img_rows / 2**4)
+        patch = int(self.img_rows / 2 ** 4)
         self.disc_patch = (patch, patch, 1)
 
         # Number of filters in the first layer of G and D
-        self.gf = 32 # 64
-        self.df = 32 # 64
+        self.gf = 32  # 64
+        self.df = 32  # 64
 
         optimizer = Adam(0.0002, 0.5)
 
         # Build and compile the discriminator
         self.discriminator = self.build_discriminator()
         self.discriminator.compile(loss='mse',
-            optimizer=optimizer,
-            metrics=['accuracy'])
+                                   optimizer=optimizer,
+                                   metrics=['accuracy'])
 
         # Build and compile the generator
         self.generator = self.build_generator()
@@ -86,22 +86,22 @@ class Pix2Pix():
         d0 = Input(shape=self.img_seq_shape)
         lstm_out = ConvLSTM2D(filters=self.gf, kernel_size=4, padding="same")(d0)
         lstm_out = LeakyReLU(alpha=0.2)(lstm_out)
-        
+
         # Downsampling
         d1 = conv2d(lstm_out, self.gf, bn=False)
-        d2 = conv2d(d1, self.gf*2)
-        d3 = conv2d(d2, self.gf*4)
-        d4 = conv2d(d3, self.gf*8)
-        d5 = conv2d(d4, self.gf*8)
-        d6 = conv2d(d5, self.gf*8)
-        d7 = conv2d(d6, self.gf*8)
-        
+        d2 = conv2d(d1, self.gf * 2)
+        d3 = conv2d(d2, self.gf * 4)
+        d4 = conv2d(d3, self.gf * 8)
+        d5 = conv2d(d4, self.gf * 8)
+        d6 = conv2d(d5, self.gf * 8)
+        d7 = conv2d(d6, self.gf * 8)
+
         # Upsampling
-        u1 = deconv2d(d7, d6, self.gf*8)
-        u2 = deconv2d(u1, d5, self.gf*8)
-        u3 = deconv2d(u2, d4, self.gf*8)
-        u4 = deconv2d(u3, d3, self.gf*4)
-        u5 = deconv2d(u4, d2, self.gf*2)
+        u1 = deconv2d(d7, d6, self.gf * 8)
+        u2 = deconv2d(u1, d5, self.gf * 8)
+        u3 = deconv2d(u2, d4, self.gf * 8)
+        u4 = deconv2d(u3, d3, self.gf * 4)
+        u5 = deconv2d(u4, d2, self.gf * 2)
         u6 = deconv2d(u5, d1, self.gf)
 
         u7 = UpSampling2D(size=2)(u6)
@@ -128,9 +128,9 @@ class Pix2Pix():
         combined_imgs = Concatenate(axis=-1)([lstm_out, img_B])
 
         d1 = d_layer(combined_imgs, self.df)
-        d2 = d_layer(d1, self.df*2)
-        d3 = d_layer(d2, self.df*4)
-        d4 = d_layer(d3, self.df*8)
+        d2 = d_layer(d1, self.df * 2)
+        d3 = d_layer(d2, self.df * 4)
+        d4 = d_layer(d3, self.df * 8)
 
         validity = Conv2D(1, kernel_size=4, strides=1, padding='same')(d4)
 
@@ -140,7 +140,6 @@ class Pix2Pix():
         start_time = datetime.datetime.now()
 
         for epoch in range(epochs):
-
             # ----------------------
             #  Train Discriminator
             # ----------------------
@@ -174,5 +173,5 @@ class Pix2Pix():
 
             elapsed_time = datetime.datetime.now() - start_time
             # Plot the progress
-            print ("%d time: %s d_loss: %s g_loss: %s" % (epoch, elapsed_time, d_loss, g_loss))
+            print("%d time: %s d_loss: %s g_loss: %s" % (epoch, elapsed_time, d_loss, g_loss))
         self.generator.save(save_file_name)
